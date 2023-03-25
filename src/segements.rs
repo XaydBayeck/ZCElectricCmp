@@ -65,14 +65,14 @@ impl Segments {
 
     pub fn select(&mut self, idx: WS) {
         use PinState::*;
-        let (st10, st11, st12) = match idx {
+        let (st12, st11, st10) = match idx {
             WS::W0 => (Low, Low, Low),
-            WS::W1 => (High, Low, Low),
+            WS::W1 => (Low, Low, High),
             WS::W2 => (Low, High, Low),
-            WS::W3 => (High, High, Low),
-            WS::W4 => (Low, Low, High),
+            WS::W3 => (Low, High, High),
+            WS::W4 => (High, Low, Low),
             WS::W5 => (High, Low, High),
-            WS::W6 => (Low, High, High),
+            WS::W6 => (High, High, Low),
             WS::W7 => (High, High, High),
         };
 

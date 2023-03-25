@@ -2,7 +2,7 @@
 #![no_std]
 #![no_main]
 
-use liquidled_testrs::utils::Gen;
+use liquidled_testrs::{keys::Key, utils::Gen};
 use nb::block;
 use panic_halt as _;
 
@@ -41,8 +41,9 @@ fn main() -> ! {
     let mut led = gpioc.pc7.into_push_pull_output(&mut gpioc.crl);
 
     // keys
-    let mut key_up = gpioa.pa4.into_pull_up_input(&mut gpioa.crl);
-    let mut key_down = gpioa.pa6.into_pull_up_input(&mut gpioa.crl);
+    // let key_up = gpioa.pa4.into_pull_up_input(&mut gpioa.crl);
+    // let key_down = gpioa.pa6.into_pull_up_input(&mut gpioa.crl);
+    let mut keys = (gpioa.pa4, gpioa.pa5, gpioa.pa6, gpioa.pa7, &mut gpioa.crl).get();
 
     // Take ownership over the raw flash and rcc devices and convert them into the corresponding
     // HAL structs
@@ -68,8 +69,6 @@ fn main() -> ! {
     let mut ws = WS::W0;
     let mut duan = 0;
     let mut led_on = false;
-    let mut key_up_active = true;
-    let mut key_down_active = true;
     loop {
         // LED test
         led_on = !led_on;
@@ -79,34 +78,21 @@ fn main() -> ! {
             led.set_high();
         }
         // Fresh segements
-        segemts.display(SEG_NUMS[number[num_sel][duan]], &mut timer);
+        segemts.display(SEG_NUMS[number[num_sel][duan]] + 0x01, &mut timer);
         segemts.select(ws);
         segemts.fresh(&mut timer);
         ws = ws.next();
         duan = if duan >= 7 { 0 } else { duan + 1 };
         // key scan
-        if key_up.is_low() {
-            timer.start(50.micros()).unwrap();
-            block!(timer.wait()).unwrap();
-            if key_up_active {
-                num_sel = if num_sel >= 2 { 0 } else { num_sel + 1 };
-                key_up_active = !key_up_active;
+        if let Some(key) = keys.scan(&mut timer) {
+            match key {
+                Key::S2 => num_sel = if num_sel >= 2 { 0 } else { num_sel + 1 },
+                Key::S3 => num_sel = if num_sel >= 2 { 0 } else { num_sel + 1 },
+                Key::S4 => num_sel = if num_sel <= 0 { 2 } else { num_sel - 1 },
+                Key::S5 => num_sel = if num_sel <= 0 { 2 } else { num_sel - 1 },
             }
             timer.start(1950.micros()).unwrap();
-        } else if key_down.is_low() {
-            timer.start(50.micros()).unwrap();
-            block!(timer.wait()).unwrap();
-            if key_down_active {
-                num_sel = if num_sel <= 0 { 2 } else { num_sel - 1 };
-                key_down_active = !key_up_active;
-            }
-            timer.start(1950.micros()).unwrap();
-        } else if key_up.is_high() && !key_up_active {
-            key_up_active = !key_up_active;
-        } else if key_down.is_high() && !key_down_active {
-            key_down_active = !key_down_active;
-        }
-        else {
+        } else {
             timer.start(2.millis()).unwrap();
         }
         block!(timer.wait()).unwrap();

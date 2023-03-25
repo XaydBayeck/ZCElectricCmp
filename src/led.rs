@@ -1,4 +1,4 @@
-use stm32f1xx_hal::gpio::{gpioc::Parts, Output, PinState, PushPull, PC7, PC8, PC9};
+use stm32f1xx_hal::gpio::{gpioc::Parts, Cr, Output, PinState, PushPull, PC7, PC8, PC9, HL};
 
 use crate::utils::Gen;
 
@@ -31,12 +31,13 @@ impl Led {
     }
 }
 
-impl Gen<Led> for Parts {
-    fn get(mut self) -> Led {
+impl Gen<Led> for (PC7, PC8, PC9, &mut <PC7 as HL>::Cr, &mut <PC8 as HL>::Cr) {
+    fn get(self) -> Led {
+        let (pc7,pc8,pc9,mut crl, mut crh) = self;
         Led(
-            self.pc7.into_push_pull_output(&mut self.crl),
-            self.pc8.into_push_pull_output(&mut self.crh),
-            self.pc9.into_push_pull_output(&mut self.crh),
+            pc7.into_push_pull_output(&mut crl),
+            pc8.into_push_pull_output(&mut crh),
+            pc9.into_push_pull_output(&mut crh),
         )
     }
 }
