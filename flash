@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+cargo build --release
+rm ./liq.hex
+objcopy -O ihex ./target/thumbv7m-none-eabi/release/liquidled-testrs liq.hex
+stm32flash -i -dtr,rts:dtr,rts /dev/ttyUSB0
+stm32flash /dev/ttyUSB0 -w ./liq.hex -v -g 0x0
