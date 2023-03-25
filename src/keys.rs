@@ -5,6 +5,8 @@ use stm32f1xx_hal::{
     timer::SysCounterUs,
 };
 
+use crate::board::Board;
+use crate::utils::Gen;
 
 #[derive(Clone, Copy)]
 pub enum Key {
