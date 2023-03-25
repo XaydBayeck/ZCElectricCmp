@@ -5,7 +5,6 @@ use stm32f1xx_hal::{
     timer::SysCounterUs,
 };
 
-use crate::utils::Gen;
 
 #[derive(Clone, Copy)]
 pub enum Key {
@@ -58,17 +57,15 @@ impl Keys {
             self.pressed
         }
     }
-}
 
-impl Gen<Keys> for (PA4, PA5, PA6, PA7,&mut <PA4 as HL>::Cr) {
-    fn get(self) -> Keys {
-        let (pa4, pa5, pa6, pa7, mut crl) = self;
+    pub fn new(pa4: PA4, pa5: PA5, pa6: PA6, pa7: PA7, crl: &mut <PA4 as HL>::Cr) -> Self {
         Keys {
-            s2: pa4.into_pull_up_input(&mut crl),
-            s3: pa5.into_pull_up_input(&mut crl),
-            s4: pa6.into_pull_up_input(&mut crl),
-            s5: pa7.into_pull_up_input(&mut crl),
+            s2: pa4.into_pull_up_input(crl),
+            s3: pa5.into_pull_up_input(crl),
+            s4: pa6.into_pull_up_input(crl),
+            s5: pa7.into_pull_up_input(crl),
             pressed: None,
         }
     }
 }
+

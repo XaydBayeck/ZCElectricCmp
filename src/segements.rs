@@ -48,7 +48,6 @@ pub struct Segments {
 }
 
 impl Segments {
-    // TODO: implement it
     pub fn display(&mut self, num: u8, timer: &mut SysCounterUs) {
         for i in 0..8 {
             self.SDI.set_state(if (num >> i) & 0x01 == 1 {
@@ -88,30 +87,24 @@ impl Segments {
         block!(timer.wait()).unwrap();
         self.LCHCLK.set_low();
     }
-}
 
-impl Gen<Segments>
-    for (
-        PB3,
-        PB4,
-        PB5,
-        &mut <PB3 as HL>::Cr,
-        PC10,
-        PC11,
-        PC12,
-        &mut <PC10 as HL>::Cr,
-    )
-{
-    fn get(self) -> Segments {
-        let (pb3, pb4, pb5, mut crl, pc10, pc11, pc12, mut crh) = self;
+    pub fn new(
+        pb3: PB3,
+        pb4: PB4,
+        pb5: PB5,
+        crl: &mut <PB3 as HL>::Cr,
+        pc10: PC10,
+        pc11: PC11,
+        pc12: PC12,
+        crh: &mut <PC10 as HL>::Cr,
+    ) -> Self {
+        let pb3 = pb3.into_push_pull_output_with_state(crl, PinState::Low);
+        let pb4 = pb4.into_push_pull_output_with_state(crl, PinState::High);
+        let pb5 = pb5.into_push_pull_output_with_state(crl, PinState::Low);
 
-        let pb3 = pb3.into_push_pull_output_with_state(&mut crl, PinState::Low);
-        let pb4 = pb4.into_push_pull_output_with_state(&mut crl, PinState::High);
-        let pb5 = pb5.into_push_pull_output_with_state(&mut crl, PinState::Low);
-
-        let pc10 = pc10.into_push_pull_output_with_state(&mut crh, PinState::Low);
-        let pc11 = pc11.into_push_pull_output_with_state(&mut crh, PinState::Low);
-        let pc12 = pc12.into_push_pull_output_with_state(&mut crh, PinState::Low);
+        let pc10 = pc10.into_push_pull_output_with_state(crh, PinState::Low);
+        let pc11 = pc11.into_push_pull_output_with_state(crh, PinState::Low);
+        let pc12 = pc12.into_push_pull_output_with_state(crh, PinState::Low);
 
         Segments {
             SDI: pb3,

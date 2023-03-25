@@ -2,7 +2,11 @@
 #![no_std]
 #![no_main]
 
-use liquidled_testrs::{keys::Key, utils::Gen};
+use liquidled_testrs::{
+    keys::{Key, Keys},
+    segements::Segments,
+    utils::Gen,
+};
 use nb::block;
 use panic_halt as _;
 
@@ -26,7 +30,7 @@ fn main() -> ! {
     let (_pa15, pb3, pb4) = dp.AFIO.constrain().mapr.disable_jtag(pa15, pb3, pb4);
 
     let mut gpioc = dp.GPIOC.split();
-    let mut segemts = (
+    let mut segemts = Segments::new(
         pb3,
         pb4,
         pb5,
@@ -35,15 +39,14 @@ fn main() -> ! {
         gpioc.pc11,
         gpioc.pc12,
         &mut gpioc.crh,
-    )
-        .get();
+    );
 
     let mut led = gpioc.pc7.into_push_pull_output(&mut gpioc.crl);
 
     // keys
     // let key_up = gpioa.pa4.into_pull_up_input(&mut gpioa.crl);
     // let key_down = gpioa.pa6.into_pull_up_input(&mut gpioa.crl);
-    let mut keys = (gpioa.pa4, gpioa.pa5, gpioa.pa6, gpioa.pa7, &mut gpioa.crl).get();
+    let mut keys = Keys::new(gpioa.pa4, gpioa.pa5, gpioa.pa6, gpioa.pa7, &mut gpioa.crl);
 
     // Take ownership over the raw flash and rcc devices and convert them into the corresponding
     // HAL structs
