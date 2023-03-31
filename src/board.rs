@@ -57,7 +57,7 @@ impl Board {
         // `clocks`
         let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-        let mut timer = Timer::syst(cp.SYST, &clocks).counter_us();
+        let timer = Timer::syst(cp.SYST, &clocks).counter_us();
 
         Self {
             led,

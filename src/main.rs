@@ -1,82 +1,93 @@
 #![deny(unsafe_code)]
+#![deny(warnings)]
 #![no_std]
 #![no_main]
 
-use liquidled_testrs::{board::Board, keys::Key};
-use nb::block;
 use panic_halt as _;
 
-use cortex_m_rt::entry;
+#[rtic::app(device = stm32f1xx_hal::pac, dispatchers = [TIM3])]
+mod app {
+    use stm32f1xx_hal::{
+        gpio::{
+            gpioa::PA7,
+            gpioc::{PC7, PC8, PC9},
+            Edge, ExtiPin, GpioExt, Input, Output, PinState, PullUp, PushPull,
+        },
+        pac::TIM2,
+        prelude::*,
+        timer::MonoTimerUs,
+    };
 
-use stm32f1xx_hal::{pac, prelude::*};
+    // A monotonic timer to enable scheduling in RTIC
+    #[monotonic(binds = TIM2, default = true)]
+    type MyMono = MonoTimerUs<TIM2>; // 100 Hz / 10 ms granularity
 
-use liquidled_testrs::segements::{SEG_NUMS, WS};
+    #[shared]
+    struct Shared {}
 
-#[entry]
-fn main() -> ! {
-    // Get access to the core peripherals from the cortex-m crate
-    let cp = cortex_m::Peripherals::take().unwrap();
-    // Get access to the device specific peripherals from the peripheral access crate
-    let dp = pac::Peripherals::take().unwrap();
+    #[local]
+    struct Local {
+        button: PA7<Input<PullUp>>,
+        led0: PC7<Output<PushPull>>,
+        led1: PC8<Output<PushPull>>,
+        led2: PC9<Output<PushPull>>,
+    }
 
-    // Initial Board
-    let Board {
-        mut led,
-        mut keys,
-        mut segmts,
-        mut timer,
-    } = Board::new(dp, cp);
+    #[init]
+    fn init(mut ctx: init::Context) -> (Shared, Local, init::Monotonics) {
+        // Initialize the monotonic (SysTick rate in QEMU is 12 MHz)
+        let rcc = ctx.device.RCC.constrain();
+        let mut flash = ctx.device.FLASH.constrain();
+        let clocks = rcc.cfgr.freeze(&mut flash.acr);
+        let mono = ctx.device.TIM2.monotonic_us(&clocks);
 
-    timer.start(72.micros()).unwrap();
-    block!(timer.wait()).unwrap();
+        // let mut timer = ctx.device.TIM1.counter_us(&clocks);
 
-    // let mut led_on = false;
-    // Wait for the timer to trigger an update and change the state of the LED
-    let mut number = [0, 0, 0, 0, 0, 0, 0, 0];
-    let mut num_sel = 2;
-    let mut ws = WS::W0;
-    let mut duan = 0;
-    let mut led_on = false;
-    loop {
-        // LED test
-        led_on = !led_on;
-        if led_on {
-            led.code_opt(Some(true), None, None);
-        } else {
-            led.code_opt(Some(false), None, None);
-        }
-        // Fresh segements
-        segmts.display(SEG_NUMS[number[duan]], &mut timer);
-        segmts.select(ws);
-        segmts.fresh(&mut timer);
-        ws = ws.next();
-        duan = if duan >= 7 { 0 } else { duan + 1 };
-        // key scan
-        if let Some(key) = keys.scan(&mut timer) {
-            match key {
-                Key::S2 => {
-                    let num = &mut number[num_sel];
-                    *num = if *num >= 16 {
-                        0
-                    }else {
-                        *num + 1
-                    }
-                },
-                Key::S3 => num_sel = if num_sel >= 7 { 0 } else { num_sel + 1 },
-                Key::S4 => {
-                    let num = &mut number[num_sel];
-                    *num = if *num <= 0 {
-                        16
-                    }else {
-                        *num - 1
-                    }
-                },
-                Key::S5 => num_sel = if num_sel <= 0 { 7 } else { num_sel - 1 },
-            }
-            timer.start(1950.micros()).unwrap();
-        } else {
-            timer.start(2.millis()).unwrap();
-        }
-        block!(timer.wait()).unwrap();
+        let mut gpioc = ctx.device.GPIOC.split();
+        let led0 = gpioc
+            .pc7
+            .into_push_pull_output_with_state(&mut gpioc.crl, PinState::Low);
+        let led1 = gpioc
+            .pc8
+            .into_push_pull_output_with_state(&mut gpioc.crh, PinState::Low);
+        let led2 = gpioc
+            .pc9
+            .into_push_pull_output_with_state(&mut gpioc.crh, PinState::High);
+
+        let mut gpioa = ctx.device.GPIOA.split();
+        let mut afio = ctx.device.AFIO.constrain();
+        let mut button = gpioa.pa7.into_pull_up_input(&mut gpioa.crl);
+        button.make_interrupt_source(&mut afio);
+        button.enable_interrupt(&mut ctx.device.EXTI);
+        button.trigger_on_edge(&mut ctx.device.EXTI, Edge::Rising);
+
+        blink::spawn_after(1.secs()).unwrap();
+        (
+            Shared {},
+            Local {
+                button,
+                led0,
+                led1,
+                led2,
+            },
+            init::Monotonics(mono),
+        )
+    }
+
+    #[task(local = [led1, led2])]
+    fn blink(ctx: blink::Context) {
+        let led1 = ctx.local.led1;
+        let led2 = ctx.local.led2;
+
+        led1.toggle();
+        led2.toggle();
+
+        blink::spawn_after(1.secs()).unwrap();
+    }
+
+    #[task(binds = EXTI9_5, local = [button, led0])]
+    fn button_click(ctx: button_click::Context) {
+        ctx.local.button.clear_interrupt_pending_bit();
+        ctx.local.led0.toggle();
     }
 }
