@@ -49,6 +49,7 @@
             stm32flash
             gcc-arm-embedded
             picom
+            openocd
           ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ libiconv ]);
         };
       });

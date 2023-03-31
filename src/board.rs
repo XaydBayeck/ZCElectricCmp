@@ -1,6 +1,8 @@
 use stm32f1xx_hal::{
     device::Peripherals,
-    prelude::{_stm32_hal_afio_AfioExt, _stm32_hal_flash_FlashExt, _stm32_hal_gpio_GpioExt},
+    prelude::{
+        _fugit_ExtU32, _stm32_hal_afio_AfioExt, _stm32_hal_flash_FlashExt, _stm32_hal_gpio_GpioExt,
+    },
     rcc::RccExt,
     timer::{SysCounterUs, Timer},
 };
@@ -33,6 +35,7 @@ impl Board {
             gpioc.pc11,
             gpioc.pc12,
             &mut gpioc.crh,
+            2.millis(),
         );
 
         let led = Led::new(
