@@ -1,8 +1,6 @@
 use stm32f1xx_hal::{
     device::Peripherals,
-    prelude::{
-        _fugit_ExtU32, _stm32_hal_afio_AfioExt, _stm32_hal_flash_FlashExt, _stm32_hal_gpio_GpioExt,
-    },
+    prelude::*,
     rcc::RccExt,
     timer::{SysCounterUs, Timer},
 };
@@ -58,7 +56,7 @@ impl Board {
 
         // Freeze the configuration of all the clocks in the system and store the frozen frequencies in
         // `clocks`
-        let clocks = rcc.cfgr.freeze(&mut flash.acr);
+        let clocks = rcc.cfgr.use_hse(8.MHz()).freeze(&mut flash.acr);
 
         let timer = Timer::syst(cp.SYST, &clocks).counter_us();
 

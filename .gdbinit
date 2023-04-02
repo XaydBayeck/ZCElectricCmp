@@ -1,3 +1,4 @@
+file ./target/thumbv7m-none-eabi/debug/liquidled-testrs
 target remote :3333
 
 monitor arm semihosting enable
@@ -17,3 +18,6 @@ monitor arm semihosting enable
 load
 step
 
+define reset
+  monitor reset halt
+end

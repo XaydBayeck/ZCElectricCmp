@@ -5,9 +5,10 @@ use State::*;
 
 type Duration = stm32f1xx_hal::timer::fugit::Duration<u32, 1, 1000000>;
 
-pub const SEG_NUMS: [u8; 18] = [
+pub const SEG_NUMS: [u8; 34] = [
     0xfc, 0x60, 0xda, 0xf2, 0x66, 0xb6, 0xbe, 0xe0, 0xfe, 0xf6, 0xee, 0x3e, 0x9c, 0x7a, 0x9e, 0x8e,
     0x01, 0x00,
+    0xfd, 0x61, 0xdb, 0xf3, 0x67, 0xb7, 0xbf, 0xe1, 0xff, 0xf7, 0xef, 0x3f, 0x9d, 0x7b, 0x9f, 0x8f,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -102,7 +103,7 @@ impl Segments {
         &self.state
     }
 
-    pub fn state_exe(&mut self, numbers: [usize; 8]) -> Duration {
+    pub fn state_exe(&mut self, numbers: &[usize; 8]) -> Duration {
         match self.state {
             State::Read(ds) => {
                 let idx: usize = self.ws.into();
@@ -114,8 +115,10 @@ impl Segments {
     }
 
     pub fn state_trans(&mut self) {
+        if self.state == Fresh {
+            self.ws = self.ws.next();
+        }
         self.state = self.state.next();
-        self.ws = self.ws.next();
     }
 
     pub fn read(&mut self, num: u8, ds: u8) -> Duration {
