@@ -17,10 +17,17 @@
         # Provides a `rustToolchain` attribute for Nixpkgs that we can use to
         # create a Rust environment
         (self: super: {
-          rustToolchain = super.rust-bin.stable.latest.default.override {
-            extensions = [ "rust-src" ];
-            targets = [ "thumbv7m-none-eabi" ];
-          };
+          # rustToolchain = super.rust-bin.stable.latest.default.override {
+          #   extensions = [ "rust-src" ];
+          #   targets = [ "thumbv7m-none-eabi" ];
+          # };
+          # rustToolchain = super.rust-bin.selectLatestNightlyWith
+          #   (toolchain: toolchain.default.override {
+          #     extensions = [ "rust-src" ];
+          #     targets = [ "thumbv7m-none-eabi" ];
+          #   });
+          rustToolchain =
+            super.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         })
       ];
 
@@ -46,6 +53,7 @@
             # The package provided by our custom overlay. Includes cargo, Clippy, cargo-fmt,
             # rustdoc, rustfmt, and other tools.
             rustToolchain
+            probe-run
             stm32flash
             gcc-arm-embedded
             picom
