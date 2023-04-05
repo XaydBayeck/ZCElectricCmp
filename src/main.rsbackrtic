@@ -178,13 +178,11 @@ mod app {
     #[task(binds=TIM1_UP, shared = [display_nums], local = [timer_handler1, segmts])]
     fn display(mut ctx: display::Context) {
         let timer = ctx.local.timer_handler1;
-        // timer.clear_interrupt(Event::Update);
 
         let segmts = ctx.local.segmts;
 
         ctx.shared.display_nums.lock(|nums| {
             timer
-                // .start(segmts.state_exe([0, 2, 1, 4, 3, 2, 6 + 18, 7]))
                 .start(segmts.state_exe(nums))
                 .unwrap();
         });

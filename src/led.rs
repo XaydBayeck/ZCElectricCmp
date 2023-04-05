@@ -1,5 +1,5 @@
-use stm32f1xx_hal::gpio::{Output, PinState, PushPull, HL, PC7, PC8, PC9};
 use LedState::*;
+use embassy_stm32::{gpio::{Output, Level::*, Speed::Medium}, peripherals::{PC7, PC8, PC9}};
 
 #[derive(Debug, Clone, Copy)]
 pub enum LedState {
@@ -86,30 +86,13 @@ impl LedState {
     }
 }
 
-pub struct Led(
-    PC7<Output<PushPull>>,
-    PC8<Output<PushPull>>,
-    PC9<Output<PushPull>>,
+pub struct Led<'d>(
+    Output<'d, PC7>,
+    Output<'d, PC8>,
+    Output<'d, PC9>,
 );
 
-impl Led {
-    pub fn code(&mut self, light0: PinState, light1: PinState, light2: PinState) {
-        self.0.set_state(light0);
-        self.1.set_state(light1);
-        self.2.set_state(light2);
-    }
-
-    pub fn code_opt(
-        &mut self,
-        light0: Option<PinState>,
-        light1: Option<PinState>,
-        light2: Option<PinState>,
-    ) {
-        light0.map(|pred| self.0.set_state(pred));
-        light1.map(|pred| self.1.set_state(pred));
-        light2.map(|pred| self.2.set_state(pred));
-    }
-
+impl Led<'_> {
     pub fn set(&mut self, led_state: LedState) {
         led_state.set_led(self);
     }
@@ -118,13 +101,11 @@ impl Led {
         pc7: PC7,
         pc8: PC8,
         pc9: PC9,
-        crl: &mut <PC7 as HL>::Cr,
-        crh: &mut <PC8 as HL>::Cr,
     ) -> Self {
         Led(
-            pc7.into_push_pull_output(crl),
-            pc8.into_push_pull_output(crh),
-            pc9.into_push_pull_output(crh),
+            Output::new(pc7, Low, Medium),
+            Output::new(pc8, Low, Medium),
+            Output::new(pc9, Low, Medium),
         )
     }
 }

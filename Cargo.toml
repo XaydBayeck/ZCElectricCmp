@@ -18,7 +18,7 @@ panic-probe = { version = "0.3.1", features = ["print-defmt"] }
 embassy-executor = { version = "0.1.1", features = ["defmt", "integrated-timers", "nightly"] }
 embassy-futures = "0.1.0"
 embassy-sync = { version = "0.1.0", features = ["defmt"] }
-embassy-time = { version = "0.1.0", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
+embassy-time = { version = "0.1.0", features = ["defmt", "defmt-timestamp-uptime"] }
 embedded-hal = "0.2.7"
 embassy-stm32 = { version = "0.1.0", features = ["nightly", "defmt", "stm32f103rb", "unstable-pac", "memory-x", "time-driver-any"]}
 # embedded-hal = "0.2.7"
