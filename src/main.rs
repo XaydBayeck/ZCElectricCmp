@@ -4,8 +4,11 @@
 
 use defmt::info;
 use embassy_executor::{main, task, Spawner};
-use embassy_stm32::{adc::Adc, pac::RCC, peripherals::*, time::Hertz, Config};
+use embassy_stm32::{
+    adc::Adc, pac::RCC, peripherals::*, rcc::low_level::RccPeripheral, time::Hertz, Config,
+};
 use embassy_time::{Delay, Duration, Timer};
+
 use liquidled_testrs::{
     led::{Led, LedState},
     segements::{self, Segments},
@@ -68,8 +71,9 @@ async fn display(
 #[main]
 async fn main(spawner: Spawner) -> ! {
     info!("Set JTag pins as normal pin.");
+    AFIO::enable();
     unsafe {
-        RCC.apb2enr().modify(|w| w.set_afioen(true));
+        // RCC.apb2enr().modify(|w| w.set_afioen(true));
         embassy_stm32::pac::AFIO.mapr().modify(|w| {
             w.set_swj_cfg(2);
         });
