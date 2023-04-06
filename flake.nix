@@ -56,7 +56,7 @@
             probe-run
             stm32flash
             gcc-arm-embedded
-            picom
+            picocom
             openocd
           ]) ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (with pkgs; [ libiconv ]);
         };
