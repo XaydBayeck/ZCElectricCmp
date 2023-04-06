@@ -2,10 +2,21 @@
 #![no_main]
 #![feature(type_alias_impl_trait)]
 
-use defmt::info;
+use defmt::{info, unwrap};
 use embassy_executor::{main, task, Spawner};
 use embassy_stm32::{
-    adc::Adc, pac::RCC, peripherals::*, rcc::low_level::RccPeripheral, time::Hertz, Config,
+    adc::Adc,
+    interrupt,
+    pac::RCC,
+    peripherals::*,
+    pwm::{
+        simple_pwm::{PwmPin, SimplePwm},
+        Channel,
+    },
+    rcc::low_level::RccPeripheral,
+    time::{khz, Hertz},
+    usart::Uart,
+    Config,
 };
 use embassy_time::{Delay, Duration, Timer};
 
@@ -68,6 +79,26 @@ async fn display(
     }
 }
 
+#[task]
+async fn usart(usart1: USART1, pa9: PA9, pa10: PA10, dma: (DMA1_CH4, DMA1_CH5)) {
+    let irq = interrupt::take!(USART1);
+    let mut usart = Uart::new(usart1, pa10, pa9, irq, dma.0, dma.1, Default::default());
+
+    for i in 0..10 {
+        Timer::after(Duration::from_secs(1)).await;
+        info!("Before send message: {} s", i);
+    }
+
+    unwrap!(usart.write(b"Hello Embassy World!\r\n").await);
+    info!("wote Hello, starting echo");
+
+    let mut buf = [0u8; 1];
+    loop {
+        unwrap!(usart.read(&mut buf).await);
+        unwrap!(usart.write(&buf).await);
+    }
+}
+
 #[main]
 async fn main(spawner: Spawner) -> ! {
     info!("Set JTag pins as normal pin.");
@@ -109,8 +140,16 @@ async fn main(spawner: Spawner) -> ! {
         ))
         .unwrap();
 
+    spawner
+        .spawn(usart(
+            dp.USART1,
+            dp.PA9,
+            dp.PA10,
+            (dp.DMA1_CH4, dp.DMA1_CH5),
+        ))
+        .unwrap();
+
     loop {
-        // info!("{:?}", segmts.current_state());
-        Timer::after(Duration::from_secs(1)).await;
+        Timer::after(Duration::from_millis(300)).await;
     }
 }
