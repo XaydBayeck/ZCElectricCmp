@@ -2,11 +2,19 @@
 #![no_main]
 #![feature(type_alias_impl_trait)]
 
-use defmt::{info, unwrap};
+use defmt::{info, unwrap, error};
 use embassy_executor::{main, task, Spawner};
 use embassy_stm32::{
-    adc::Adc, interrupt, pac::RCC, peripherals::*, rcc::low_level::RccPeripheral, time::Hertz,
-    usart::Uart, Config,
+    adc::Adc,
+    dma::NoDma,
+    i2c::{Error, I2c, TimeoutI2c},
+    interrupt,
+    pac::RCC,
+    peripherals::*,
+    rcc::low_level::RccPeripheral,
+    time::Hertz,
+    usart::Uart,
+    Config,
 };
 use embassy_time::{Delay, Duration, Timer};
 
@@ -69,6 +77,7 @@ async fn display(
     }
 }
 
+#[task]
 async fn usart(usart1: USART1, pa9: PA9, pa10: PA10, dma: (DMA1_CH4, DMA1_CH5)) {
     let irq = interrupt::take!(USART1);
     let mut usart = Uart::new(usart1, pa10, pa9, irq, dma.0, dma.1, Default::default());
@@ -129,9 +138,36 @@ async fn main(spawner: Spawner) -> ! {
         ))
         .unwrap();
 
-    usart(dp.USART1, dp.PA9, dp.PA10, (dp.DMA1_CH4, dp.DMA1_CH5)).await;
+    spawner
+        .spawn(usart(
+            dp.USART1,
+            dp.PA9,
+            dp.PA10,
+            (dp.DMA1_CH4, dp.DMA1_CH5),
+        ))
+        .unwrap();
 
-    loop {
-        Timer::after(Duration::from_millis(300)).await;
-    }
+    let irq = interrupt::take!(I2C1_EV);
+    let mut i2c = I2c::new(
+        dp.I2C1,
+        dp.PB6,
+        dp.PB7,
+        irq,
+        NoDma,
+        NoDma,
+        Hertz(100_000),
+        Default::default(),
+    );
+
+    let mut timeout_i2c = TimeoutI2c::new(&mut i2c, Duration::from_millis(1000));
+
+    let mut data = [0u8; 1];
+
+    // loop {
+        match timeout_i2c.blocking_write_read(0x40, &[0x3e], &mut data) {
+            Ok(()) => info!("Whoami: {}", data[0]),
+            Err(Error::Timeout) => error!("Operation timed out"),
+            Err(e) => error!("I2c Error: {:?}", e),
+        }
+    // }
 }
