@@ -5,18 +5,8 @@
 use defmt::{info, unwrap};
 use embassy_executor::{main, task, Spawner};
 use embassy_stm32::{
-    adc::Adc,
-    interrupt,
-    pac::RCC,
-    peripherals::*,
-    pwm::{
-        simple_pwm::{PwmPin, SimplePwm},
-        Channel,
-    },
-    rcc::low_level::RccPeripheral,
-    time::{khz, Hertz},
-    usart::Uart,
-    Config,
+    adc::Adc, interrupt, pac::RCC, peripherals::*, rcc::low_level::RccPeripheral, time::Hertz,
+    usart::Uart, Config,
 };
 use embassy_time::{Delay, Duration, Timer};
 
@@ -79,7 +69,6 @@ async fn display(
     }
 }
 
-#[task]
 async fn usart(usart1: USART1, pa9: PA9, pa10: PA10, dma: (DMA1_CH4, DMA1_CH5)) {
     let irq = interrupt::take!(USART1);
     let mut usart = Uart::new(usart1, pa10, pa9, irq, dma.0, dma.1, Default::default());
@@ -140,14 +129,7 @@ async fn main(spawner: Spawner) -> ! {
         ))
         .unwrap();
 
-    spawner
-        .spawn(usart(
-            dp.USART1,
-            dp.PA9,
-            dp.PA10,
-            (dp.DMA1_CH4, dp.DMA1_CH5),
-        ))
-        .unwrap();
+    usart(dp.USART1, dp.PA9, dp.PA10, (dp.DMA1_CH4, dp.DMA1_CH5)).await;
 
     loop {
         Timer::after(Duration::from_millis(300)).await;
