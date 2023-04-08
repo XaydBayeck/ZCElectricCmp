@@ -53,7 +53,7 @@
             # The package provided by our custom overlay. Includes cargo, Clippy, cargo-fmt,
             # rustdoc, rustfmt, and other tools.
             rustToolchain
-            probe-run
+            # probe-run
             stm32flash
             gcc-arm-embedded
             picocom

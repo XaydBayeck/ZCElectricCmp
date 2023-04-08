@@ -38,7 +38,6 @@ embassy-stm32 = { version = "0.1.0", features = ["nightly", "defmt", "stm32f103r
 embassy-stm32 = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
 embassy-usb = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
 embassy-time = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
-probe-rs = { git = "https://github.com/probe-rs/probe-rs" }
 
 [profile.dev]
 opt-level = "s"
