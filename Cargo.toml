@@ -8,20 +8,21 @@ edition = "2021"
 [dependencies]
 cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
 cortex-m-rt = "0.7.3"
-defmt = "0.3"
+defmt = "=0.3.2"
 defmt-rtt = "0.4"
 futures = { version = "0.3.28", default-features = false, features = ["async-await"] }
 heapless = { version = "0.7.16", default-features = false }
 nb = "1.1.0"
 panic-probe = { version = "0.3.1", features = ["print-defmt"] }
 
+embedded-hal = "0.2.7"
+
 embassy-executor = { version = "0.1.1", features = ["defmt", "integrated-timers", "nightly"] }
 embassy-futures = "0.1.0"
 embassy-sync = { version = "0.1.0", features = ["defmt"] }
 embassy-time = { version = "0.1.0", features = ["defmt", "defmt-timestamp-uptime"] }
-embedded-hal = "0.2.7"
 embassy-usb = { version = "0.1.0", features = ["defmt"]}
-embassy-stm32 = { version = "0.1.0", features = ["nightly", "defmt", "stm32f103rb", "unstable-pac", "memory-x", "time-driver-any"]}
+embassy-stm32 = { version = "0.1.0", features = ["nightly", "defmt", "stm32f103rb", "unstable-pac", "memory-x", "time-driver-any", "exti"]}
 # embedded-hal = "0.2.7"
 # nb = "1"
 # cortex-m = "0.7.6"
@@ -38,6 +39,8 @@ embassy-stm32 = { version = "0.1.0", features = ["nightly", "defmt", "stm32f103r
 embassy-stm32 = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
 embassy-usb = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
 embassy-time = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
+embassy-futures = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
+embassy-sync = { git = "https://github.com/embassy-rs/embassy.git", branch = "master" }
 
 [profile.dev]
 opt-level = "s"
